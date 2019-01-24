@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "build-go": "GOOS=js GOARCH=wasm go build -o ./go/main.wasm ./go/main.go",
+    "dev": "yarn build-go && nodemon index.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
