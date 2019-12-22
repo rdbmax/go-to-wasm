@@ -1,61 +1,64 @@
-import React, { Component } from 'react'
+import React, { useState, useEffect } from 'react'
 
-class App extends Component {
-  state = {
-    isLoading: true,
-    jsTiming: undefined,
-    goTiming: undefined,
-    loopTime: 100000000
+const longJsTask = loopTime => new Promise((resolve) => {
+  const t0 = performance.now();
+
+  let counter = 0;
+  let data = 1;
+
+  while (counter < loopTime) {
+    data = Math.sqrt(data * counter) + 10;
+    counter++;
   }
 
-  componentDidMount () {
-    WebAssembly
-      .instantiateStreaming(
-        fetch('http://localhost:3000'),
-        go.importObject
-      )
-      .then(async result => {
-        go.run(result.instance)
-        this.setState({ isLoading: false })
-      })
-  }
+  resolve(Math.floor(performance.now() - t0));
+});
 
-  onClickLongRunningTask = () => {
-    const t0 = performance.now();
+const longGoTask = loopTime => new Promise((resolve) => {
+  const t0 = performance.now();
 
-    let counter = 0;
-    let data = 1;
+  longRunningTaskGO(loopTime);
 
-    while (counter < this.state.loopTime) {
-      data = Math.sqrt(data * counter) + 10
-      counter++;
-    }
+  resolve(Math.floor(performance.now() - t0));
+});
 
-    const t1 = performance.now();
+const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [jsTiming, setJsTiming] = useState();
+  const [goTiming, setGoTiming] = useState();
+  const [loopTime] = useState(100000000);
 
-    this.setState({ jsTiming: Math.floor(t1 - t0) })
-  }
+  useEffect(
+    () => {
+      WebAssembly
+        .instantiateStreaming(
+          fetch('http://localhost:3000'),
+          go.importObject
+        )
+        .then(async result => {
+          go.run(result.instance)
+          setIsLoading(false)
+        })
+    },
+    [],
+  );
 
-  onClickLongRunningTaskGO = () => {
-    const t0 = performance.now();
+  const onClickLongRunningTask = () => {
+    longJsTask(loopTime).then(setJsTiming);
+  };
 
-    const returnedValue = longRunningTaskGO(this.state.loopTime);
+  const onClickLongRunningTaskGO = () => {
+    longGoTask(loopTime).then(setGoTiming);
+  };
 
-    const t1 = performance.now();
-    
-    this.setState({ goTiming: Math.floor(t1 - t0) })
-  }
+  return isLoading
+    ? <div>Loading</div>
+    : <div>
+      <button onClick={onClickLongRunningTask}>Long running Task</button>
+      <button onClick={onClickLongRunningTaskGO}>Long running Task with Go</button>
+      { jsTiming && <p>JS function timing {jsTiming} ms</p> }
+      { goTiming && <p>GO function timing {goTiming} ms</p> }
+    </div>;
+};
 
-  render() {
-    return this.state.isLoading
-      ? <div>Loading</div>
-      : <div>
-        <button onClick={this.onClickLongRunningTask}>Long running Task</button>
-        <button onClick={this.onClickLongRunningTaskGO}>Long running Task with Go</button>
-        { this.state.jsTiming && <p>Js function timing {this.state.jsTiming} ms</p> }
-        { this.state.goTiming && <p>Js function timing {this.state.goTiming} ms</p> }
-      </div>
-  }
-}
-
-export default App
+export default App;

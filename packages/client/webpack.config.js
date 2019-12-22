@@ -8,7 +8,7 @@ module.exports = {
   devtool: 'source-map',
   entry: {
     vendor: ['@babel/polyfill', 'react', 'react-dom'],
-    client:     './src/index.js',
+    client: './src/index.js',
   },
   output: {
     path: __dirname + '/dist',
