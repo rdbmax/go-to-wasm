@@ -1,20 +1,25 @@
 package main
 
 import (
-	"fmt"
-	"syscall/js"
+  "syscall/js"
+  "math"
 )
 
-// return something in sayHi function
-// create a function with a big loop to compare perfs
+func longRunning(this js.Value, args []js.Value) interface{} {
+  counter := 0.0
+  data := 1.0
+  timeLoop := float64(args[0].Int())
 
-func sayHi(args []js.Value) {
-	returnString := fmt.Sprintf("Hi %v!", args[0])
-	fmt.Println(returnString)
+  for counter < timeLoop {
+    data = math.Sqrt(data * counter) + 10
+		counter += 1
+  }
+
+  return js.ValueOf(data)
 }
 
 func registerCallbacks() {
-	js.Global().Set("sayHi", js.NewCallback(sayHi))
+	js.Global().Set("longRunningTaskGO", js.FuncOf(longRunning))
 }
 
 func main() {
